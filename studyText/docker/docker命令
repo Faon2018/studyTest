@@ -1,0 +1,171 @@
+# 1.镜像操作
+
+## 1.1镜像查找
+
+```shell
+docker images 
+```
+
+![image-20201207172152899](C:\Users\Faon\Desktop\笔记\study\studyText\images\image-20201207172152899.png)
+
+**-a :**列出本地所有的镜像（含中间映像层，默认情况下，过滤掉中间映像层）；
+
+![image-20201207172324913](C:\Users\Faon\Desktop\笔记\study\studyText\images\image-20201207172324913.png)
+
+**-f :**显示满足条件的镜像；
+
+```she
+docker iamges -f=reference='[repository]:[tag]' //根据repository和tag模糊删选
+docker images -f "before=[repository]:[tag]" //根据repository和tag名称，删选在此镜像之前【根据created时间】的镜像
+```
+
+
+
+![image-20201207174425438](C:\Users\Faon\AppData\Roaming\Typora\typora-user-images\image-20201207174425438.png)
+
+**-q :**只显示镜像ID。只显示imagesid
+
+![image-20201207175101024](C:\Users\Faon\Desktop\笔记\study\studyText\images\image-20201207175101024.png)
+
+**--filter**：根据repository名称和tag名称顾虑，**docker images  ---filter "before=[repository]:[tag]"**,tag不写默认为latest.
+
+![image-20201207173325070](C:\Users\Faon\AppData\Roaming\Typora\typora-user-images\image-20201207173325070.png)
+
+```shell
+docker images --filter=reference='[repository]:[tag]'
+```
+
+
+
+![image-20201207174045080](C:\Users\Faon\Desktop\笔记\study\studyText\images\image-20201207174045080.png)
+
+## 1.2镜像删除
+
+```she
+docker rmi [options] image [image...]//删除
+```
+
+**-f :**强制删除；docker rmi -f  [repository]:[tag(可选)]
+
+**--no-prune :**不移除该镜像的过程镜像，**默认移除**；
+
+![image-20201207180418328](C:\Users\Faon\Desktop\笔记\study\studyText\images\image-20201207180418328.png)
+
+```shell
+docker image prune -a //删除所有未被容器使用的对象
+docker iamge prune //删除所有未被 tag 标记和未被容器使用的镜像:
+```
+
+```shell
+docker container prune //删除所有停止运行的容器:
+docker volume prune //删除所有未被挂载的卷:
+docker network prune //删除所有网络:
+docker system prune //删除 docker 所有资源:
+docker system prune -all //删除停止的容器、删除所有未被容器使用的网络、删除所有none的镜像。
+```
+
+## 1.3镜像标记
+
+```shell
+##标记本地镜像，重新生成一份镜像，但是image id 不会变
+docker tag [repository]:[tag(可选)] [new repository name]:[new tag name(默认为latest)]
+```
+
+### 1.4 查看镜像的详情
+
+```shell
+docker inspect [image]
+```
+
+
+
+# 2.容器操作
+
+## 2.1 关闭运行的容器
+
+```shell
+docker stop [container(容器id或者names均可)] #停止一个运行中的容器
+
+```
+
+![image-20201221103637551](C:\Users\Faon\AppData\Roaming\Typora\typora-user-images\image-20201221103637551.png)
+
+![image-20201221104106942](C:\Users\Faon\AppData\Roaming\Typora\typora-user-images\image-20201221104106942.png)
+
+## 2.2 启动容器
+
+```shell
+docker start  [container(容器id或者names均可)]#启动一个或多个已经被停止的容器
+docker restart #重启容器
+```
+
+## 2.3删除容器
+
+```shell
+docker rm #删除一个或多个容器 docker rm [OPTIONS] CONTAINER [CONTAINER...]
+-f :通过 SIGKILL 信号强制删除一个运行中的容器。
+
+-l :移除容器间的网络连接，而非容器本身。
+
+-v :删除与容器关联的卷。
+```
+
+
+
+![image-20201221104829073](C:\Users\Faon\AppData\Roaming\Typora\typora-user-images\image-20201221104829073.png)
+
+## 2.4 杀掉容器
+
+```shell
+docker kill [container]
+-s :向容器发送一个信号
+
+```
+
+![image-20201221110354640](C:\Users\Faon\AppData\Roaming\Typora\typora-user-images\image-20201221110354640.png)
+
+![image-20201221110407362](C:\Users\Faon\AppData\Roaming\Typora\typora-user-images\image-20201221110407362.png)
+
+## 2.5创建容器
+
+```shell
+docker create #创建一个新的容器但不启动它
+用法同 docker run
+```
+
+## 2.6 创建并运行容器
+
+```shell
+docker run 
+d: 后台运行容器，并返回容器ID；
+-it
+#-i: 以交互模式运行容器，通常与 -t 同时使用；
+#-t: 为容器重新分配一个伪输入终端，通常与 -i 同时使用；
+-P: 随机端口映射，容器内部端口随机映射到主机的端口 #主机端口随机，容器端口为80
+
+-p: 指定端口映射，格式为：主机(宿主)端口:容器端口
+
+-e username="ritchie": 设置环境变量；
+#
+
+--name="nginx-lb": 为容器指定一个名称；
+--volume , -v: 绑定一个卷，#当挂在文件时，先创建文件，不然会将文件创建成文件夹，从而出错。
+```
+
+```shell
+docker run --name mysql_01 -d -p 3306:3306 -d -e MYSQL_ROOT_PASSWORD=123456 mysql:5.7 #创建mysql容器并运行
+```
+
+## 2.7 连接容器
+
+```shell
+docker exec -it [container] /bin/bash #进入容器
+```
+
+## 2.8容器详情
+
+```shell
+docker inspect [container] #运行和未运行的容器均可查看,也可找ip和端口信息
+docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' [container] #查询ip并只显示ip
+```
+

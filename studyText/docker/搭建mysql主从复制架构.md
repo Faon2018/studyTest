@@ -1,0 +1,177 @@
+
+
+
+
+# 基于docker的mysql主从架构搭建
+
+## mysql 主从架构概念及运用场景
+
+### MySQL Replication
+
+主从复制（也称 AB 复制）允许将来自一个MySQL数据库服务器（主服务器）的数据复制到一个或多个MySQL数据库服务器（从服务器）。
+
+原理图：
+
+![image-20201221152519219](C:\Users\Faon\AppData\Roaming\Typora\typora-user-images\image-20201221152519219.png)
+
+当主库数据发生改变时，会把改变写入到二级制日志文件（binary log），从库的io线程会读取主库的二进制日志到从库的relay log(中继文件，也是二进制)，
+
+从库的数据库线程会检查relay log文件是否有更新，当有更新时读取并执行。
+
+### 一主多从
+
+如果一主多从的话，这时主库既要负责写又要负责为几个从库提供二进制日志。此时可以稍做调整，将二进制日志只给某一从，这一从再开启二进制日志并将自己的二进制日志再发给其它从。或者是干脆这个从不记录只负责将二进制日志转发给其它从，这样架构起来性能可能要好得多，而且数据之间的延时应该也稍微要好一些。工作原理图如下：
+
+![image-20201221155126104](C:\Users\Faon\AppData\Roaming\Typora\typora-user-images\image-20201221155126104.png)
+
+### 搭建步骤
+
++ 1.创建并启动主库容器
+
+  ```shell
+  docker run --name mysql_master -p 3306:3306  -d -e MYSQL_ROOT_PASSWORD=123456  mysql:5.7
+  ```
+
++ 2.进入主库容器
+
+  ```shell
+  docker exec -it mysql_master
+  ```
+
++ 3.编辑  **/etc/mysql/my.cnf**  文件
+
+  ```shell
+  cd /etc/mysql
+  #安装vim
+  apt-get update
+  apt-get install vim
+  vim my.cnf
+  ```
+
+  ```she
+  [mysqld]
+  ## 同一局域网内注意要唯一
+  server-id=1 
+  ## 开启二进制日志功能，可以随便取（关键）
+  log-bin=mysql-bin
+  ```
+
++ 4.由于前三步，在容器中下载安装vim较慢，所以挂载比较快
+
+  ```sh
+  #先在系统中 创建/home/mysql/mysql_master.cnf 文件,并编辑写入第三步的配置信息
+  docker run --name mysql_master -p 3306:3306  -d -v /home/mysql/mysql_master.cnf:/etc/mysql/my.cnf -e MYSQL_ROOT_PASSWORD=123456  mysql:5.7
+  ```
+
+  
+
++ 5.重启服务
+
+  ```shell
+  ##重启mysql服务使配置生效
+  service mysql restart
+  ##重启容器
+  docker start mysql_master
+  ```
+
+  
+
++ 6.Master数据库中创建数据同步用户 **slave**
+
+  ```mysql
+  #创建slave用户
+  CREATE USER 'slave'@'%' IDENTIFIED BY '123456';
+  #授予REPLICATION SLAVE, REPLICATION CLIENT权限
+  GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'slave'@'%';
+  ```
+
+  
+
++ 7.创建并启动从库容器，同主库相同，挂载配置文件如下：
+
+  ```she
+  docker run --name mysql_master -p 3307:3306  -d -v /home/mysql/mysql_slave_01.cnf:/etc/mysql/my.cnf -e MYSQL_ROOT_PASSWORD=123456  mysql:5.7
+  ```
+
+  
+
+  ```shell
+  
+  [mysqld]
+  ## 设置server_id,注意要唯一
+  server-id=2  
+  ## 开启二进制日志功能，以备Slave作为其它Slave的Master时使用（本次搭建架构中将第一个从库开启二进制日志文件作为其他从库的同步源）
+  log-bin=mysql-slave-bin   
+  ## relay_log配置中继日志
+  relay_log=edu-mysql-relay-bin  
+  ```
+
+  
+
+  
+
++ 8.一样的重启服务即可
+
++ 9.主从库数据库配置
+
+  ```mysql
+  ##进入主数据库
+  show master status;
+  ```
+
+  ![image-20201221172315940](C:\Users\Faon\AppData\Roaming\Typora\typora-user-images\image-20201221172315940.png)
+
+```mysql
+##进入从数据库
+CHANGE MASTER TO master_host = '172.17.0.2', ##主库ip(可以是主库所在容器的ip,也可以是容器所在服务器ip)
+ master_user = 'slave',##前面在主库创建的用于同步用户的用户名
+ master_password = '123456',##前面在主库创建的用于同步用户的密码 
+ master_port = 3306,##主库端口（可以使容器的端口，也可以是容器与主机对应的主机端口，但必须与master_host对应）
+ master_log_file = 'mysql-bin.000001',##必须与前面主库查询的 File 相同 
+ master_log_pos = 358,##开始读取的位置，应与前面主库查询的 Position 相同 
+ master_connect_retry = 30;##如果连接失败，重试的时间间隔，单位是秒，默认是60秒
+
+START SLAVE;##在从库中开启同步 (停止 stop slave)
+##------------------------若将此从库设置为其他从库复制的主库时，进行或许的设置-------------------------------
+## 停止io线程,将无法同步主库日志文件，STOP SLAVE IO_THREAD;
+## 停止sql线程，将无法执行同步主库的sql,STOP SLAVE SQL_THREAD;
+##此次搭建的从库 mysql_slave_01 只提供复制日志文件的功能，并提供给其他的从库同步，所以关闭sql线程
+STOP SLAVE SQL_THREAD;
+##创建供其他的从库复制同步的用户
+#创建slave用户
+CREATE USER 'slave_01'@'%' IDENTIFIED BY '123456';
+#授予REPLICATION SLAVE, REPLICATION CLIENT权限
+GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'slave_01'@'%';
+```
+
+
+
++ 10.创建第二个从库
+
+  ```shell
+  docker run --name mysql_slave_02 -p 3308:3306 -e MYSQL_ROOT_PASSWORD=123456 -d -v /home/mysql/slave_02.cnf:/etc/mysql/my,cnf mysql:5.7
+  ```
+
+  ```mysql
+  ##进入第一个从库并查询
+  show master status;
+  ```
+
+  
+
+  ![image-20201221182459249](C:\Users\Faon\AppData\Roaming\Typora\typora-user-images\image-20201221182459249.png)
+
+  ```mysql
+  ##进入从数据库
+  CHANGE MASTER TO master_host = '172.17.0.2', ##主库ip(第一个从库ip)
+   master_user = 'slave_01',##前面第一个从库创建的用于同步用户的用户名
+   master_password = '123456',##前面第一个从库创建的用于同步用户的密码 
+   master_port = 3306,##主库端口
+   master_log_file = 'mysql-slave-bin.000004',##必须与File 相同 
+   master_log_pos = 154,##开始读取的位置，应与前面主库查询的 Position 相同 
+   master_connect_retry = 30;##如果连接失败，重试的时间间隔，单位是秒，默认是60秒
+  
+  START SLAVE;
+  ```
+
+  
