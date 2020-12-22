@@ -6,11 +6,11 @@
 docker images 
 ```
 
-![image-20201207172152899](C:\Users\Faon\Desktop\笔记\study\studyText\images\image-20201207172152899.png)
+![image-20201207172152899](..\images\image-20201207172152899.png)
 
 **-a :**列出本地所有的镜像（含中间映像层，默认情况下，过滤掉中间映像层）；
 
-![image-20201207172324913](C:\Users\Faon\Desktop\笔记\study\studyText\images\image-20201207172324913.png)
+![image-20201207172324913](..\images\image-20201207172324913.png)
 
 **-f :**显示满足条件的镜像；
 
@@ -21,15 +21,15 @@ docker images -f "before=[repository]:[tag]" //根据repository和tag名称，�
 
 
 
-![image-20201207174425438](C:\Users\Faon\AppData\Roaming\Typora\typora-user-images\image-20201207174425438.png)
+![image-20201207174425438](..\image-20201207174425438.png)
 
 **-q :**只显示镜像ID。只显示imagesid
 
-![image-20201207175101024](C:\Users\Faon\Desktop\笔记\study\studyText\images\image-20201207175101024.png)
+![image-20201207175101024](..\images\image-20201207175101024.png)
 
 **--filter**：根据repository名称和tag名称顾虑，**docker images  ---filter "before=[repository]:[tag]"**,tag不写默认为latest.
 
-![image-20201207173325070](C:\Users\Faon\AppData\Roaming\Typora\typora-user-images\image-20201207173325070.png)
+![image-20201207173325070](..\images\image-20201207173325070.png)
 
 ```shell
 docker images --filter=reference='[repository]:[tag]'
@@ -37,7 +37,7 @@ docker images --filter=reference='[repository]:[tag]'
 
 
 
-![image-20201207174045080](C:\Users\Faon\Desktop\笔记\study\studyText\images\image-20201207174045080.png)
+![image-20201207174045080](..\images\image-20201207174045080.png)
 
 ## 1.2镜像删除
 
@@ -49,7 +49,7 @@ docker rmi [options] image [image...]//删除
 
 **--no-prune :**不移除该镜像的过程镜像，**默认移除**；
 
-![image-20201207180418328](C:\Users\Faon\Desktop\笔记\study\studyText\images\image-20201207180418328.png)
+![image-20201207180418328](..\images\image-20201207180418328.png)
 
 ```shell
 docker image prune -a //删除所有未被容器使用的对象
@@ -88,9 +88,9 @@ docker stop [container(容器id或者names均可)] #停止一个运行中的容�
 
 ```
 
-![image-20201221103637551](C:\Users\Faon\AppData\Roaming\Typora\typora-user-images\image-20201221103637551.png)
+![image-20201221103637551](..\images\image-20201221103637551.png)
 
-![image-20201221104106942](C:\Users\Faon\AppData\Roaming\Typora\typora-user-images\image-20201221104106942.png)
+![image-20201221104106942](..\images\image-20201221104106942.png)
 
 ## 2.2 启动容器
 
@@ -112,7 +112,7 @@ docker rm #删除一个或多个容器 docker rm [OPTIONS] CONTAINER [CONTAINER.
 
 
 
-![image-20201221104829073](C:\Users\Faon\AppData\Roaming\Typora\typora-user-images\image-20201221104829073.png)
+![image-20201221104829073](..\images\image-20201221104829073.png)
 
 ## 2.4 杀掉容器
 
@@ -122,9 +122,9 @@ docker kill [container]
 
 ```
 
-![image-20201221110354640](C:\Users\Faon\AppData\Roaming\Typora\typora-user-images\image-20201221110354640.png)
+![image-20201221110354640](..\images\image-20201221110354640.png)
 
-![image-20201221110407362](C:\Users\Faon\AppData\Roaming\Typora\typora-user-images\image-20201221110407362.png)
+![image-20201221110407362](..\images\image-20201221110407362.png)
 
 ## 2.5创建容器
 
@@ -167,5 +167,15 @@ docker exec -it [container] /bin/bash #进入容器
 ```shell
 docker inspect [container] #运行和未运行的容器均可查看,也可找ip和端口信息
 docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' [container] #查询ip并只显示ip
+```
+
+## 2.9查看容器日志
+
+```shell
+docker logs [options] container
+-f : 跟踪日志输出
+--since :显示某个开始时间的所有日志
+-t : 显示时间戳
+--tail :仅列出最新N条容器日志
 ```
 

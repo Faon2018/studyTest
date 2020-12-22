@@ -12,7 +12,7 @@
 
 原理图：
 
-![image-20201221152519219](C:\Users\Faon\AppData\Roaming\Typora\typora-user-images\image-20201221152519219.png)
+![image-20201221152519219](..\images\image-20201221152519219.png)
 
 当主库数据发生改变时，会把改变写入到二级制日志文件（binary log），从库的io线程会读取主库的二进制日志到从库的relay log(中继文件，也是二进制)，
 
@@ -22,7 +22,7 @@
 
 如果一主多从的话，这时主库既要负责写又要负责为几个从库提供二进制日志。此时可以稍做调整，将二进制日志只给某一从，这一从再开启二进制日志并将自己的二进制日志再发给其它从。或者是干脆这个从不记录只负责将二进制日志转发给其它从，这样架构起来性能可能要好得多，而且数据之间的延时应该也稍微要好一些。工作原理图如下：
 
-![image-20201221155126104](C:\Users\Faon\AppData\Roaming\Typora\typora-user-images\image-20201221155126104.png)
+![image-20201221155126104](..\images\image-20201221155126104.png)
 
 ### 搭建步骤
 
@@ -103,7 +103,7 @@
   ## 开启二进制日志功能，以备Slave作为其它Slave的Master时使用（本次搭建架构中将第一个从库开启二进制日志文件作为其他从库的同步源）
   log-bin=mysql-slave-bin   
   ## relay_log配置中继日志
-  relay_log=edu-mysql-relay-bin  
+  #relay_log=edu-mysql-relay-bin  
   ```
 
   
@@ -119,7 +119,7 @@
   show master status;
   ```
 
-  ![image-20201221172315940](C:\Users\Faon\AppData\Roaming\Typora\typora-user-images\image-20201221172315940.png)
+  ![image-20201221172315940](..\images\image-20201221172315940.png)
 
 ```mysql
 ##进入从数据库
@@ -135,8 +135,6 @@ START SLAVE;##在从库中开启同步 (停止 stop slave)
 ##------------------------若将此从库设置为其他从库复制的主库时，进行或许的设置-------------------------------
 ## 停止io线程,将无法同步主库日志文件，STOP SLAVE IO_THREAD;
 ## 停止sql线程，将无法执行同步主库的sql,STOP SLAVE SQL_THREAD;
-##此次搭建的从库 mysql_slave_01 只提供复制日志文件的功能，并提供给其他的从库同步，所以关闭sql线程
-STOP SLAVE SQL_THREAD;
 ##创建供其他的从库复制同步的用户
 #创建slave用户
 CREATE USER 'slave_01'@'%' IDENTIFIED BY '123456';
@@ -152,18 +150,28 @@ GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'slave_01'@'%';
   docker run --name mysql_slave_02 -p 3308:3306 -e MYSQL_ROOT_PASSWORD=123456 -d -v /home/mysql/slave_02.cnf:/etc/mysql/my,cnf mysql:5.7
   ```
 
+  slave_02.cnf
+  
+  ```shell
+  [mysqld]
+## 设置server_id,注意要唯一
+  server-id=2 
+```
+  
+
+  
   ```mysql
   ##进入第一个从库并查询
   show master status;
   ```
-
   
-
-  ![image-20201221182459249](C:\Users\Faon\AppData\Roaming\Typora\typora-user-images\image-20201221182459249.png)
-
+  
+  
+  ![image-20201221182459249](..\images\image-20201221182459249.png)
+  
   ```mysql
   ##进入从数据库
-  CHANGE MASTER TO master_host = '172.17.0.2', ##主库ip(第一个从库ip)
+CHANGE MASTER TO master_host = '172.17.0.3', ##主库ip(第一个从库ip)
    master_user = 'slave_01',##前面第一个从库创建的用于同步用户的用户名
    master_password = '123456',##前面第一个从库创建的用于同步用户的密码 
    master_port = 3306,##主库端口
@@ -173,5 +181,5 @@ GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'slave_01'@'%';
   
   START SLAVE;
   ```
-
+  
   
