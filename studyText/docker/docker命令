@@ -21,7 +21,7 @@ docker images -f "before=[repository]:[tag]" //根据repository和tag名称，�
 
 
 
-![image-20201207174425438](..\image-20201207174425438.png)
+![image-20201207174425438](..\images\image-20201207174425438.png)
 
 **-q :**只显示镜像ID。只显示imagesid
 
@@ -179,3 +179,35 @@ docker logs [options] container
 --tail :仅列出最新N条容器日志
 ```
 
+# 操作实例
+
++ nacos
+
+  nacos数据库配置
+
+  ```properties
+  spring.datasource.platform=mysql
+  db.num=1
+  db.url.0=jdbc:mysql://xx.xx.xx.x:3306/nacos_config?characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true
+  db.user=user
+  db.password=pass
+  ```
+
+  
+
++ idea 远程连接docker
+
+  ```shell
+  vim /lib/systemd/system/docker.service
+  ```
+
+  在`ExecStart`后面追加 `-H tcp://0.0.0.0:2375 -H unix://var/run/docker.sock`
+
+  ```shell
+  #重新加载配置文件
+  systemctl daemon-reload
+  #重启docker服务
+  systemctl restart docker
+  ```
+
+  访问 http://远程docker所在ip:2375/info  查看是否有信息，若存在则配置ok
