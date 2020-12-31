@@ -77,6 +77,34 @@ docker tag [repository]:[tag(可选)] [new repository name]:[new tag name(默认
 docker inspect [image]
 ```
 
+### 1.5创建镜像
+
+```shell
+docker build [options] PATH | URL | -
+#参数说明
+--build-arg=[] :设置镜像创建时的变量；
+#例如 Dockerfile 文件内容为
+------------
+ARG NGINX_VERSION #arg定义变量才能被from使用
+ARG BUILD_HELLO
+FROM nginx:${NGINX_VERSION}
+ARK BUILD_HELLO #在from之后使用需要再次声明
+RUN echo "build sucess ${NGINX_VERSION} ${BUILD_HELLO}"
+------------
+#则构建命令为
+docker build --build-arg NGINX_VERSION=1.18-alpine \--build-arg BUILD_HELLO=hello -t nginx:test .
+-f :指定要使用的Dockerfile路径；
+#例子 docker build -f /home/dokcer/Dockerfile .
+# /home/dokcer/Dockerfile 指向Dockerfile 文件位置
+# docker build .  //表示Dokcerfile文件在当前路径下
+--rm :设置镜像成功后删除中间容器；
+--tag, -t: 镜像的名字及标签，通常 name:tag 或者 name 格式；可以在一次构建中为一个镜像设置多个标签。
+#创建镜像并命名
+docker build -t(或--tag) myimage:latest .
+# .(点) 表示镜像构建过程中的上下文环境的目录
+--no-cache :创建镜像的过程不使用缓存；
+```
+
 
 
 # 2.容器操作
@@ -178,6 +206,22 @@ docker logs [options] container
 -t : 显示时间戳
 --tail :仅列出最新N条容器日志
 ```
+
+# 命令参数问题
+
++ 通过追加 --help查看命令
+
+  ![image-20201231170839978](..\images\image-20201231170839978.png)
+
+```shell
+#docker build --build-arg  参数为list 
+#当只有一个参数时，和strig一样
+#多个时用 \ 追加
+docker build -t nginx:latest  --build-arg NGINX_VERSION=1.18-alpine \--build-arg BUILD_HELLO=hello  .
+#注意 \与第二个参数设置指令之间不能有空格
+```
+
+
 
 # 操作实例
 
