@@ -76,7 +76,72 @@ Docker build 命令根据Dockerfile和上下文构建一个镜像。构建的上
   docker run -p 80:8080/tcp 
   ```
 
+
+
+
++ ENV
+
+  ```shell
+  ENV <key>=<value> ...
+  #多个值可以空格隔开，也可以，value中的空格 用\加空格 表说，或将整个值用引号包裹
+  ENV MY_NAME="John Doe"
+  ENV MY_DOG=Rex\ The\ Dog
+  ENV MY_CAT=fluffy
+  ENV MY_NAME="John Doe" MY_DOG=Rex\ The\ Dog MY_CAT=fluffy
   
+  #ENV 指令还允许使用另一种语法 ENV < key > < value > ，省略了 = 。
+  ENV MY_VAR my-value #但只能设置一个值
+  ```
+
+  ENV指定的环境变量可用于 运行镜像时设定 
+
+  ```shell
+  docker run --env MY_NAME="jonh doe" \--env MY_DOG="jogn doe"
+  ```
+
+
++ ADD
+
+  ADD 指令从 < src > 复制新的文件、目录或远程文件 url，并将它们添加到位于 < dest > 路径的镜像文件系统中。
+
+  ```shell
+  #将text.txt添加到<WORKDIR>/relativeDir/  (相对路径)
+  ADD test.txt relationDir/
+  #将“ test.txt”添加到/absoluteDir/ （绝对路径）
+  ADD test.txt /absoluteDir/
+  ```
+
+  
+
++ COPY
+
+  COPY 指令从 < src > 复制新的文件或目录，并将它们添加到位于路径 < dest > 的容器的文件系统中。
+
+  同 ADD指令
+
++ VOLUME
+
+  挂载卷
+
++ USER
+
+  USER 指令设置运行映像时要使用的用户名(或 UID)和可选的用户组(或 GID) ，以及 Dockerfile 中跟随它的任何 RUN、 CMD 和 ENTRYPOINT 指令
+
++ WORKDIR
+
+  指令为任何在 Dockerfile 中跟随它的 RUN、 CMD、 ENTRYPOINT、 COPY 和 ADD 指令设置工作目录。如果 WORKDIR 不存在，即使它不在任何后续的 Dockerfile 指令中使用，它也会被创建。
+
+
+
+
+
+
+
+
+
+
+
+
 
 # .dockerignore 编写
 
