@@ -43,5 +43,45 @@ credential_spec: #证书规格
 depends_on: #服务依赖，依赖会比服务先启动
 	- db
 	- redis
+deploy: #指定服务的部署和运行相关的配置
+	endpoint_mode: vip #vip:为服务分配一个虚拟ip作为客户端的访问服务的地址,dnsrr:Docker 为该服务设置 DNS 条目, 使得服务名称的 DNS 查询返回一个 IP 地址列表, 客户端直接访问其中的一个地址
+	labels: #服务标签
+		com.example.description: "This label will appear on the web service"
+	mode: global #deploy模式；global:每个群集节点只有一个容器.replicated:指定容器的数量（默认）
+	replicas: 6 #指定容器数量，与 mode:replicated 一起使用
+	placement: #指定约束和首选项的位置
+	resources: #配置资源约束
+		limits:               # 设置容器的资源限制
+          	cpus: "0.5"           # 设置该容器最多只能使用 50% 的 CPU 
+            memory: 50M           # 设置该容器最多只能使用 50M 的内存空间 
+         reservations:         # 设置为容器预留的系统资源(随时可用)
+            cpus: "0.2"           # 为该容器保留 20% 的 CPU
+            memory: 20M           # 为该容器保留 20M 的内存空间
+    restart_policy: #重启策略配置
+        condition: on-failure #重启策略选择；none:不尝试重启；on-failure:只有当容器内部应用程序出现问题才会重启；any:无论如何都会尝试重启(默认)
+        delay: 5s #尝试重启的间隔时间(默认为 0s) 
+        max_attempts: 3  # 尝试重启次数(默认一直尝试重启)
+        window: 120s  # 检查重启是否成功之前的等待时间(即如果容器启动了, 隔多少秒之后去检测容器是否正常, 默认 0s)
+    update_config:         # 用于配置滚动更新配置
+         parallelism: 2         # 一次性更新的容器数量
+         delay: 10s         # 更新一组容器之间的间隔时间
+         failure_action: continue        # 定义更新失败的策略;continue:继续更新,rollback:回滚更新,pause:暂停更新(默认)
+         monitor:               # 每次更新后的持续时间以监视更新是否失败(单位: ns|us|ms|s|m|h) (默认为0)
+         max_failure_ratio:     # 回滚期间容忍的失败率(默认值为0)
+         order: stop-first      # v3.4 版本中新增的参数, 回滚期间的操作顺序
+                    stop-first            #旧任务在启动新任务之前停止(默认)
+                    start-first           #首先启动新任务, 并且正在运行的任务暂时重叠
+     rollback_config:       # v3.7 版本中新增的参数, 用于定义在 update_config 更新失败的回滚策略
+          parallelism:           # 一次回滚的容器数, 如果设置为0, 则所有容器同时回滚
+          delay:                 # 每个组回滚之间的时间间隔(默认为0)
+          failure_action: continue        # 定义回滚失败的策略
+                    continue              # 继续回滚
+                    pause                 # 暂停回滚
+           monitor:               # 每次回滚任务后的持续时间以监视失败(单位: ns|us|ms|s|m|h) (默认为0)
+           max_failure_ratio:     # 回滚期间容忍的失败率(默认值0)
+           order: stop-first       # 回滚期间的操作顺序
+                   stop-first       # 旧任务在启动新任务之前停止(默认)
+                    start-first     # 首先启动新任务, 并且正在运行的任务暂时重叠
+
 ```
 
