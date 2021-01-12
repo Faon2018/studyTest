@@ -8,3 +8,9 @@
 
   ![image-20201207165441553](..\images\image-20201207165441553.png)
 
+Percona XtraDB Cluster（简称PXC集群）提供了MySQL高可用的一种实现方法
+
+- 集群是有节点组成的，推荐配置至少3个节点，但是也可以运行在2个节点上，生产环境建议不要超过15个，否则整体性能下降的很快
+- 每个节点都是普通的mysql/percona服务器，可以将现有的数据库服务器组成集群，反之，也可以将集群拆分成单独的服务器
+- 每个节点都包含完整的数据副本
+  PXC集群主要由两部分组成：Percona Server with XtraDB和Write Set Replication patches（使用了Galera library，一个通用的用于事务型应用的同步、多主复制插件）

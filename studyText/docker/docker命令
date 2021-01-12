@@ -105,8 +105,6 @@ docker build -t(或--tag) myimage:latest .
 --no-cache :创建镜像的过程不使用缓存；
 ```
 
-
-
 # 2.容器操作
 
 ## 2.1 关闭运行的容器
@@ -169,15 +167,20 @@ d: 后台运行容器，并返回容器ID；
 -it
 #-i: 以交互模式运行容器，通常与 -t 同时使用；
 #-t: 为容器重新分配一个伪输入终端，通常与 -i 同时使用；
--P: 随机端口映射，容器内部端口随机映射到主机的端口 #主机端口随机，容器端口为80
+-P(大写): 随机端口映射，容器内部端口随机映射到主机的端口 #主机端口随机，容器端口为80
 
 -p: 指定端口映射，格式为：主机(宿主)端口:容器端口
 
 -e username="ritchie": 设置环境变量；
-#
-
+--network，--net 连接网络（会覆盖默认bridge网络docker0）
+#创建三个容器，分别前两个使用默认网络启动容器，第三个使用自定义bridge网络启动。 然后再将第二个容器添加到自定义网络。这三个容器的网络情况如下：
+#第一个容器：只有默认的docker0
+#第二个容器：属于两个网络：docker0和自定义网络
+#第三个容器：只属于自定义网络
+#当指定连接网络时，进入容器可用ifconfig查看网络
 --name="nginx-lb": 为容器指定一个名称；
 --volume , -v: 绑定一个卷，#当挂在文件时，先创建文件，不然会将文件创建成文件夹，从而出错。
+--workdir , -w 容器的工作目录
 ```
 
 ```shell
@@ -188,6 +191,8 @@ docker run --name mysql_01 -d -p 3306:3306 -d -e MYSQL_ROOT_PASSWORD=123456 mysq
 
 ```shell
 docker exec -it [container] /bin/bash #进入容器
+docker exec -it [container] bash #进入容器
+docker exec -it [container] sh #进入容器
 ```
 
 ## 2.8容器详情
@@ -220,6 +225,85 @@ docker logs [options] container
 docker build -t nginx:latest  --build-arg NGINX_VERSION=1.18-alpine \--build-arg BUILD_HELLO=hello  .
 #注意 \与第二个参数设置指令之间不能有空格
 ```
+
+# 数据卷
+
++ 创建数据卷
+
+  ```shell
+  docker volume create [OPTIONS] [VOLUME]
+  #options
+  --driver,-d 数据卷的驱动；默认为local
+  --lable 数据卷的元数据
+  --name 数据卷的名称
+  --opt,-o  数据卷驱动选项
+  #examples
+  docker volume create -d local  testvolume
+  #启动容器时可应用该卷
+  docker run -d -v testvolume:/world myimage
+  ```
+
++ 查看一个或多个数据卷详情
+
+  ```shell
+  docker volume inspect [OPTIONS] [VOLUME..]
+  #examples
+  docker volume inspect myvolume
+  docker volume inspect --format '{{ .Mountpoint }}' myvolume
+  ```
+
++ 数据卷列表
+
+  ```shell
+  docker volume ls [OPTIONS]
+  #options
+  --filter,-f  
+  过滤属性：
+  dangling (boolean - true or false, 0 or 1)
+  driver (a volume driver’s name)
+  label (label=<key> or label=<key>=<value>)
+  name (a volume’s name)
+  #examples
+  docker volume ls -f driver=local
+  cker volume ls --filter label=is-timelord=yes --filter label=is-timelord=no
+  --format
+  #examples
+  docker volume ls --format "{{.Name}}: {{.Driver}}"
+  --quiet , -q 仅显示数据卷名称
+  ```
+
++ 移除未使用的本地卷
+
+  ```shell
+  docker volume prune [OPTIONS]
+  #options
+  --filter 过滤条件
+  --force,-f 强制删除
+  ```
+
++ 删除一个或多个数据卷
+
+  ```shell
+  docker volume rm [OPTIONS] VOLUME [VOLUME...]
+  #options
+  --force,-f 强制删除
+  ```
+
+# 网络
+
++ 连接网络
+
+  ```shell
+  docker network connect [OPTIONS] NETWORK CONTAINER
+  ```
+
++ 创建网络
+
+  ```shell
+  docker network create [OPTIONS] NETWORK
+  ```
+
+  
 
 
 

@@ -154,6 +154,7 @@ GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'slave_01'@'%';
   
   ```shell
   [mysqld]
+  ```
 ## 设置server_id,注意要唯一
   server-id=2 
 ```
@@ -163,12 +164,12 @@ GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'slave_01'@'%';
   ```mysql
   ##进入第一个从库并查询
   show master status;
-  ```
+```
+
   
-  
-  
+
   ![image-20201221182459249](..\images\image-20201221182459249.png)
-  
+
   ```mysql
   ##进入从数据库
 CHANGE MASTER TO master_host = '172.17.0.3', ##主库ip(第一个从库ip)
@@ -181,5 +182,89 @@ CHANGE MASTER TO master_host = '172.17.0.3', ##主库ip(第一个从库ip)
   
   START SLAVE;
   ```
+
   
-  
+
+### 双主双从
+
+搭建两套主从后，两主互相复制
+
+两主配置文
+
+```xml
+#M1（第一个主库）
+[mysqld]
+basedir =/usr/local/mysql
+datadir =/usr/local/mysql/data
+port = 3306
+server_id = 1
+log-bin= mysql-bin
+binlog_format = mixed
+read-only=0
+#binlog-do-db=test
+binlog-ignore-db=mysql
+binlog-ignore-db=information_schema
+binlog-ignore-db=performance_schema
+auto-increment-offset=1
+auto-increment-increment=2
+#S1（第一个从库）
+[mysqld]
+basedir =/usr/local/mysql
+datadir =/usr/local/mysql/data
+port = 3306
+server_id = 2
+log-bin= mysql-bin
+binlog_format = mixed
+#replicate-do-db=test
+replicate-ignore-db=mysql
+replicate-ignore-db=information_schema
+replicate-ignore-db=performance_schema
+relay_log=mysql-relay-bin
+log-slave-updates=on
+#M2（第二个主库）
+[mysqld]
+basedir =/usr/local/mysql
+datadir =/usr/local/mysql/data
+port = 3306
+server_id = 3
+log-bin= mysql-bin
+binlog_format = mixed
+read-only=0
+#binlog-do-db=test
+binlog-ignore-db=mysql
+binlog-ignore-db=information_schema
+binlog-ignore-db=performance_schema
+auto-increment-offset=2
+auto-increment-increment=2
+#S2（第二个从库）
+[mysqld]
+basedir =/usr/local/mysql
+datadir =/usr/local/mysql/data
+port = 3306
+server_id = 4
+log-bin= mysql-bin
+binlog_format = mixed
+#replicate-do-db=test
+replicate-ignore-db=mysql
+replicate-ignore-db=information_schema
+replicate-ignore-db=performance_schema
+relay_log=mysql-relay-bin
+log-slave-updates=on
+#属性说明
+log-bin ：需要启用二进制日志
+server_id : 用于标识不同的数据库服务器
+binlog-do-db : 需要记录到二进制日志的数据库
+binlog-ignore-db : 忽略记录二进制日志的数据库
+auto-increment-offset :该服务器自增列的初始值。
+auto-increment-increment :该服务器自增列增量。
+replicate-do-db ：指定复制的数据库
+replicate-ignore-db ：不复制的数据库
+relay_log ：从库的中继日志，主库日志写到中继日志，中继日志再重做到从库。
+log-slave-updates ：该从库是否写入二进制日志，如果需要成为多主则可启用。只读可以不需要。
+
+如果为多主的话注意设置 auto-increment-offset 和 auto-increment-increment
+如上面为双主的设置：
+ 自增列显示为：1,3,5,7,……（offset=1，increment=2）
+ 自增列显示为：2,4,6,8,……（offset=2，increment=2）
+```
+
