@@ -18,6 +18,32 @@
 
 从库的数据库线程会检查relay log文件是否有更新，当有更新时读取并执行。
 
+## binary log 三种模式
+
++ STATEMENT
+
+  ```reStructuredText
+  每修改一条sql就会记录到binlog中。
+  优点： 仅仅记录了SQL，不会记录执行结果，减少了binlog日志量，节约了IO，提高性能
+  缺点: 会出现结果不一致情况,系统函数或系统变量。如select now()、insert into @@hostname
+  ```
+
++ ROW
+
+  ```reStructuredText
+  每条记录的修改都会被记录。
+  优点： 不存在数据不一致情况
+  缺点: 一旦修改alter table会出现binlog暴涨。
+  ```
+
++ MIXED
+
+  ```reStructuredText
+  以上两种模式混合使用。一般的复制使用STATEMENT模式保存binlog。
+  ```
+
+  
+
 ### 一主多从
 
 如果一主多从的话，这时主库既要负责写又要负责为几个从库提供二进制日志。此时可以稍做调整，将二进制日志只给某一从，这一从再开启二进制日志并将自己的二进制日志再发给其它从。或者是干脆这个从不记录只负责将二进制日志转发给其它从，这样架构起来性能可能要好得多，而且数据之间的延时应该也稍微要好一些。工作原理图如下：
@@ -253,6 +279,7 @@ log-slave-updates=on
 #属性说明
 log-bin ：需要启用二进制日志
 server_id : 用于标识不同的数据库服务器
+binlog_format:binary log的模式，三种
 binlog-do-db : 需要记录到二进制日志的数据库
 binlog-ignore-db : 忽略记录二进制日志的数据库
 auto-increment-offset :该服务器自增列的初始值。
