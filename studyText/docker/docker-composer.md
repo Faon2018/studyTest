@@ -1,7 +1,3 @@
-
-
-
-
 # docker-composer.yml
 
 Compose 文件是一个定义服务、网络和卷的 YAML 文件
@@ -117,10 +113,7 @@ services:
 
 networks:
 	netName:
-		external: true #如果设置为 true，Docker-compose up 不会尝试创建它，会引用已存在的网络，如果不存在则会引发错误。 false时会创建 
-		#or
-		external:
-			name: netName #引用网络  
+		external: true #如果设置为 true，Docker-compose up 不会尝试创建它，会引用已存在的网络，如果不存在则会引发错误。 false时会创建  
 		name: mynetName #为此网络设置自定义名称,可包含特殊的字符
 		driver: overlay #网络应驱动程序;可选值：BRIDGE、OVERLAY、HOST 、 NONE、自定义驱动程序
 		driver_opts: #传递给此网络驱动程序的键-值对
@@ -160,7 +153,7 @@ services:
     ports:
       - 80:80
 networks:
-  test:
+  nginx_default:
     external:
       name: nginx_network
 ```
